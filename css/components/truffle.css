@@ -1,0 +1,470 @@
+/* ===== TRUFFLE STYLES ===== */
+
+.truffles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.truffle {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+  transition: all var(--transition-base);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* ===== TRUFFLE TYPE STYLES ===== */
+
+.truffle--button-mushrooms {
+  background: var(--button-mushroom);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.truffle--summer-truffles {
+  background: var(--summer-truffle);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.truffle--black-truffles {
+  background: var(--black-truffle);
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.truffle--white-truffles {
+  background: var(--white-truffle);
+  border-color: rgba(0, 0, 0, 0.3);
+  color: #333;
+}
+
+.truffle--diamond-truffles {
+  background: var(--diamond-truffle);
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(185, 242, 255, 0.6);
+  animation: diamond-sparkle 2s ease-in-out infinite;
+}
+
+.truffle--golden-truffles {
+  background: var(--golden-truffle);
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 25px rgba(255, 215, 0, 0.8);
+  animation: golden-glow 1.5s ease-in-out infinite alternate;
+}
+
+.truffle--poo-truffles {
+  background: var(--poo-truffle);
+  border-color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 30px rgba(139, 69, 19, 0.6);
+  animation: poo-pulse 1s ease-in-out infinite;
+}
+
+/* ===== TRUFFLE ANIMATIONS ===== */
+
+/* Basic truffle hover */
+.truffle:hover {
+  transform: scale(1.1);
+  z-index: 25;
+}
+
+/* Diamond truffle sparkle */
+@keyframes diamond-sparkle {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+    transform: scale(1);
+  }
+  25% {
+    filter: brightness(1.3) saturate(1.2);
+    transform: scale(1.05);
+  }
+  50% {
+    filter: brightness(1.5) saturate(1.4);
+    transform: scale(1.08);
+  }
+  75% {
+    filter: brightness(1.2) saturate(1.1);
+    transform: scale(1.03);
+  }
+}
+
+/* Golden truffle glow */
+@keyframes golden-glow {
+  0% {
+    filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+  }
+  100% {
+    filter: brightness(1.5) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+  }
+}
+
+/* Poo truffle pulse */
+@keyframes poo-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: brightness(1.3) hue-rotate(10deg);
+  }
+}
+
+/* ===== TRUFFLE COLLECTION ANIMATION ===== */
+
+.truffle--collecting {
+  animation: truffle-collect 1.5s ease-in-out forwards;
+  z-index: 30;
+}
+
+@keyframes truffle-collect {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  20% {
+    transform: scale(1.2) translateY(-10px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.5) translateY(-100px) translateX(var(--collect-x, 0px));
+    opacity: 0;
+  }
+}
+
+/* ===== DIRT MOUNDS ===== */
+
+.dirt-mounds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.dirt-mound {
+  position: absolute;
+  width: 48px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all var(--transition-fast);
+  z-index: 12;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.dirt-mound:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3)) brightness(1.2);
+}
+
+.dirt-mound:active {
+  transform: scale(0.95);
+}
+
+/* Mound spawn animation */
+.dirt-mound {
+  animation: mound-spawn 0.5s ease-out;
+}
+
+@keyframes mound-spawn {
+  0% {
+    transform: scale(0) translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Mound despawn animation */
+.dirt-mound--despawning {
+  animation: mound-despawn 0.3s ease-in forwards;
+}
+
+@keyframes mound-despawn {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* ===== SPECIAL MOUND TYPES ===== */
+
+/* Legendary mound indicator */
+.dirt-mound--legendary {
+  animation: mound-spawn 0.5s ease-out, legendary-glow 2s ease-in-out infinite;
+}
+
+@keyframes legendary-glow {
+  0%,
+  100% {
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))
+      drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+  }
+  50% {
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))
+      drop-shadow(0 0 16px rgba(255, 215, 0, 0.8));
+  }
+}
+
+/* Rare mound indicator */
+.dirt-mound--rare {
+  animation: mound-spawn 0.5s ease-out, rare-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes rare-shimmer {
+  0%,
+  100% {
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3)) brightness(1);
+  }
+  50% {
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3)) brightness(1.3);
+  }
+}
+
+/* ===== PARTICLE EFFECTS ===== */
+
+/* Success particles */
+.truffle-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.success-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  animation: particle-burst 1s ease-out forwards;
+}
+
+@keyframes particle-burst {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.3) translate(var(--burst-x), var(--burst-y));
+    opacity: 0;
+  }
+}
+
+/* Legendary particle effect */
+.legendary-particle {
+  background: var(--accent-color);
+  animation: legendary-particle 1.5s ease-out forwards;
+}
+
+@keyframes legendary-particle {
+  0% {
+    transform: scale(1) translate(0, 0) rotate(0deg);
+    opacity: 1;
+    background: var(--accent-color);
+  }
+  50% {
+    background: #ffd700;
+    transform: scale(1.2)
+      translate(calc(var(--burst-x) * 0.5), calc(var(--burst-y) * 0.5))
+      rotate(180deg);
+  }
+  100% {
+    transform: scale(0.2) translate(var(--burst-x), var(--burst-y))
+      rotate(360deg);
+    opacity: 0;
+    background: #fff;
+  }
+}
+
+/* ===== FLOATING VALUE TEXT ===== */
+
+.floating-value {
+  position: absolute;
+  font-weight: bold;
+  font-size: var(--font-size-large);
+  color: var(--accent-color);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  z-index: 35;
+  animation: float-up 2s ease-out forwards;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  20% {
+    transform: translateY(-10px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-80px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Different colors for different value ranges */
+.floating-value--small {
+  color: #90ee90; /* Light green for small values */
+}
+
+.floating-value--medium {
+  color: var(--accent-color); /* Gold for medium values */
+}
+
+.floating-value--large {
+  color: #ff6347; /* Orange-red for large values */
+  font-size: var(--font-size-xl);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 99, 71, 0.5);
+}
+
+.floating-value--legendary {
+  color: #ffd700;
+  font-size: var(--font-size-xxl);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 215, 0, 0.8);
+  animation: float-legendary 2.5s ease-out forwards;
+}
+
+@keyframes float-legendary {
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  10% {
+    transform: translateY(-5px) scale(1.3) rotate(-5deg);
+    opacity: 1;
+  }
+  20% {
+    transform: translateY(-15px) scale(1.4) rotate(5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+@media (max-width: 768px) {
+  .truffle {
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+  }
+
+  .dirt-mound {
+    width: 40px;
+    height: 30px;
+    font-size: 28px;
+  }
+
+  .floating-value {
+    font-size: var(--font-size-base);
+  }
+
+  .floating-value--large {
+    font-size: var(--font-size-large);
+  }
+
+  .floating-value--legendary {
+    font-size: var(--font-size-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .truffle {
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+  }
+
+  .dirt-mound {
+    width: 36px;
+    height: 26px;
+    font-size: 24px;
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .truffle--diamond-truffles,
+  .truffle--golden-truffles,
+  .truffle--poo-truffles {
+    animation: none;
+  }
+
+  .dirt-mound--legendary,
+  .dirt-mound--rare {
+    animation: mound-spawn 0.5s ease-out; /* Keep spawn, remove glow */
+  }
+
+  .truffle--collecting {
+    animation: none;
+    opacity: 0; /* Just fade out */
+  }
+
+  .floating-value,
+  .floating-value--legendary {
+    animation: none;
+    opacity: 0;
+  }
+
+  /* Provide static indicators instead */
+  .truffle--diamond-truffles {
+    filter: brightness(1.3);
+    border-width: 3px;
+  }
+
+  .truffle--golden-truffles {
+    filter: brightness(1.4);
+    border-width: 3px;
+  }
+
+  .truffle--poo-truffles {
+    filter: brightness(1.2);
+    border-width: 3px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .truffle {
+    border-width: 3px;
+    border-color: currentColor;
+  }
+
+  .dirt-mound {
+    filter: contrast(1.5);
+  }
+}

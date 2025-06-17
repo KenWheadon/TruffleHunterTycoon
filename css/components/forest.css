@@ -1,0 +1,476 @@
+/* ===== FOREST BACKGROUND STYLES ===== */
+
+.forest-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-background);
+  overflow: hidden;
+  transition: all var(--transition-slow);
+}
+
+/* Forest layers for parallax effect */
+.forest-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120%; /* Wider for parallax scrolling */
+  height: 100%;
+  background-size: cover;
+  background-repeat: repeat-x;
+  background-position: bottom;
+}
+
+.forest-back {
+  z-index: 1;
+  opacity: 0.6;
+  animation: parallax-back 60s linear infinite;
+}
+
+.forest-mid {
+  z-index: 2;
+  opacity: 0.8;
+  animation: parallax-mid 40s linear infinite;
+}
+
+.forest-front {
+  z-index: 3;
+  opacity: 0.9;
+  animation: parallax-front 20s linear infinite;
+}
+
+/* Parallax scrolling animations */
+@keyframes parallax-back {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-20%);
+  }
+}
+
+@keyframes parallax-mid {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-20%);
+  }
+}
+
+@keyframes parallax-front {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-20%);
+  }
+}
+
+/* ===== LOCATION-SPECIFIC BACKGROUNDS ===== */
+
+/* Beginner Forest - Bright and welcoming */
+.beginner-forest {
+  background: linear-gradient(180deg, #87ceeb 0%, #98fb98 60%, #228b22 100%);
+}
+
+.beginner-forest .forest-back {
+  background: radial-gradient(
+      circle at 20% 80%,
+      rgba(34, 139, 34, 0.3) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 60% 70%,
+      rgba(34, 139, 34, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 90% 85%,
+      rgba(34, 139, 34, 0.3) 0%,
+      transparent 50%
+    );
+}
+
+.beginner-forest .forest-mid {
+  background: linear-gradient(
+      transparent 60%,
+      rgba(34, 139, 34, 0.4) 70%,
+      rgba(34, 139, 34, 0.6) 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 80px,
+      rgba(139, 69, 19, 0.1) 80px,
+      rgba(139, 69, 19, 0.1) 85px
+    );
+}
+
+.beginner-forest .forest-front {
+  background: linear-gradient(
+    transparent 80%,
+    rgba(34, 139, 34, 0.8) 90%,
+    rgba(34, 139, 34, 1) 100%
+  );
+}
+
+/* Oak Grove - Dense and mature */
+.oak-grove {
+  background: linear-gradient(180deg, #4682b4 0%, #228b22 40%, #006400 100%);
+}
+
+.oak-grove .forest-back {
+  background: radial-gradient(
+      circle at 15% 75%,
+      rgba(0, 100, 0, 0.4) 0%,
+      transparent 60%
+    ),
+    radial-gradient(circle at 45% 70%, rgba(0, 100, 0, 0.3) 0%, transparent 60%),
+    radial-gradient(circle at 75% 80%, rgba(0, 100, 0, 0.4) 0%, transparent 60%),
+    radial-gradient(circle at 95% 75%, rgba(0, 100, 0, 0.3) 0%, transparent 60%);
+}
+
+.oak-grove .forest-mid {
+  background: linear-gradient(
+      transparent 50%,
+      rgba(0, 100, 0, 0.5) 65%,
+      rgba(0, 100, 0, 0.7) 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 60px,
+      rgba(139, 69, 19, 0.2) 60px,
+      rgba(139, 69, 19, 0.2) 68px
+    );
+}
+
+.oak-grove .forest-front {
+  background: linear-gradient(
+    transparent 75%,
+    rgba(0, 100, 0, 0.9) 85%,
+    rgba(0, 100, 0, 1) 100%
+  );
+}
+
+/* Ancient Woods - Dark and mysterious */
+.ancient-woods {
+  background: linear-gradient(180deg, #2f4f4f 0%, #1a4a1a 40%, #0d2d0d 100%);
+}
+
+.ancient-woods .forest-back {
+  background: radial-gradient(
+      circle at 10% 70%,
+      rgba(0, 50, 0, 0.6) 0%,
+      transparent 70%
+    ),
+    radial-gradient(circle at 35% 65%, rgba(0, 50, 0, 0.5) 0%, transparent 70%),
+    radial-gradient(circle at 65% 75%, rgba(0, 50, 0, 0.6) 0%, transparent 70%),
+    radial-gradient(circle at 90% 70%, rgba(0, 50, 0, 0.5) 0%, transparent 70%);
+}
+
+.ancient-woods .forest-mid {
+  background: linear-gradient(
+      transparent 40%,
+      rgba(13, 45, 13, 0.6) 60%,
+      rgba(13, 45, 13, 0.8) 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 45px,
+      rgba(139, 69, 19, 0.3) 45px,
+      rgba(139, 69, 19, 0.3) 52px
+    );
+}
+
+.ancient-woods .forest-front {
+  background: linear-gradient(
+    transparent 70%,
+    rgba(13, 45, 13, 0.95) 80%,
+    rgba(13, 45, 13, 1) 100%
+  );
+}
+
+/* Mystic Glade - Magical and ethereal */
+.mystic-glade {
+  background: linear-gradient(
+    180deg,
+    #4b0082 0%,
+    #228b22 30%,
+    #32cd32 70%,
+    #9aff9a 100%
+  );
+}
+
+.mystic-glade .forest-back {
+  background: radial-gradient(
+      circle at 20% 60%,
+      rgba(147, 112, 219, 0.4) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 50% 70%,
+      rgba(50, 205, 50, 0.3) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 65%,
+      rgba(147, 112, 219, 0.4) 0%,
+      transparent 60%
+    );
+  animation: mystic-glow 8s ease-in-out infinite alternate;
+}
+
+.mystic-glade .forest-mid {
+  background: linear-gradient(
+      transparent 50%,
+      rgba(50, 205, 50, 0.4) 70%,
+      rgba(50, 205, 50, 0.6) 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 70px,
+      rgba(147, 112, 219, 0.2) 70px,
+      rgba(147, 112, 219, 0.2) 75px
+    );
+}
+
+.mystic-glade .forest-front {
+  background: linear-gradient(
+    transparent 75%,
+    rgba(50, 205, 50, 0.8) 85%,
+    rgba(50, 205, 50, 0.9) 100%
+  );
+}
+
+/* Mystic glow animation */
+@keyframes mystic-glow {
+  0% {
+    filter: brightness(1) saturate(1);
+  }
+  100% {
+    filter: brightness(1.2) saturate(1.3);
+  }
+}
+
+/* ===== ATMOSPHERIC EFFECTS ===== */
+
+/* Sunbeams for Beginner Forest */
+.beginner-forest::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background: linear-gradient(
+      110deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.1) 45%,
+      transparent 50%
+    ),
+    linear-gradient(
+      120deg,
+      transparent 60%,
+      rgba(255, 255, 255, 0.05) 65%,
+      transparent 70%
+    );
+  animation: sunbeams 10s ease-in-out infinite alternate;
+  z-index: 5;
+  pointer-events: none;
+}
+
+@keyframes sunbeams {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+/* Mist for Ancient Woods */
+.ancient-woods::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  animation: mist-flow 15s ease-in-out infinite alternate;
+  z-index: 5;
+  pointer-events: none;
+}
+
+@keyframes mist-flow {
+  0% {
+    opacity: 0.2;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 0.4;
+    transform: translateX(10px);
+  }
+}
+
+/* Sparkles for Mystic Glade */
+.mystic-glade::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+      2px 2px at 20px 30px,
+      rgba(255, 255, 255, 0.8) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      2px 2px at 40px 70px,
+      rgba(147, 112, 219, 0.8) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      1px 1px at 90px 40px,
+      rgba(255, 255, 255, 0.6) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      1px 1px at 130px 80px,
+      rgba(147, 112, 219, 0.6) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      2px 2px at 160px 30px,
+      rgba(255, 255, 255, 0.8) 0%,
+      transparent 50%
+    );
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: sparkle-float 20s linear infinite;
+  z-index: 5;
+  pointer-events: none;
+}
+
+@keyframes sparkle-float {
+  0% {
+    opacity: 0.4;
+    transform: translateY(0px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 0.4;
+    transform: translateY(0px);
+  }
+}
+
+/* ===== GROUND LAYER ===== */
+
+.forest-ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  z-index: var(--z-game-objects);
+  pointer-events: none;
+}
+
+.beginner-forest .forest-ground {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(34, 139, 34, 0.9) 50%,
+    rgba(34, 139, 34, 1) 100%
+  );
+}
+
+.oak-grove .forest-ground {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 100, 0, 0.9) 50%,
+    rgba(0, 100, 0, 1) 100%
+  );
+}
+
+.ancient-woods .forest-ground {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(13, 45, 13, 0.9) 50%,
+    rgba(13, 45, 13, 1) 100%
+  );
+}
+
+.mystic-glade .forest-ground {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(50, 205, 50, 0.9) 50%,
+    rgba(50, 205, 50, 1) 100%
+  );
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+@media (max-width: 768px) {
+  .forest-layer {
+    width: 110%; /* Less wide on mobile */
+  }
+
+  /* Reduce animation complexity on mobile */
+  .forest-back,
+  .forest-mid,
+  .forest-front {
+    animation-duration: 80s, 60s, 40s; /* Slower animations */
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .forest-back,
+  .forest-mid,
+  .forest-front {
+    animation: none;
+  }
+
+  .beginner-forest::before,
+  .ancient-woods::before,
+  .mystic-glade::after {
+    animation: none;
+    opacity: 0.5; /* Static atmospheric effects */
+  }
+
+  .mystic-glade .forest-back {
+    animation: none;
+    filter: brightness(1.1) saturate(1.1);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .forest-background {
+    filter: contrast(1.5);
+  }
+
+  .forest-layer {
+    opacity: 1 !important;
+  }
+}

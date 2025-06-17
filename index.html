@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Truffle Hunter Tycoon</title>
+
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/components/pig.css" />
+    <link rel="stylesheet" href="css/components/forest.css" />
+    <link rel="stylesheet" href="css/components/truffle.css" />
+    <link rel="stylesheet" href="css/components/ui-panel.css" />
+    <link rel="stylesheet" href="css/layouts/game-layout.css" />
+    <link rel="stylesheet" href="css/animations/ui-animations.css" />
+
+    <!-- GSAP Animation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  </head>
+  <body>
+    <!-- Game Container -->
+    <div id="game-container" class="game-container">
+      <!-- Top UI Bar -->
+      <div id="top-ui" class="top-ui">
+        <div class="resource-display">
+          <div class="gold-display">
+            <span class="gold-icon">🪙</span>
+            <span id="gold-amount" class="gold-amount">$0</span>
+          </div>
+          <div class="reputation-display">
+            <span class="reputation-icon">⭐</span>
+            <span id="reputation-amount" class="reputation-amount">0</span>
+          </div>
+        </div>
+
+        <div class="location-display">
+          <span id="current-location" class="current-location"
+            >Beginner Forest</span
+          >
+        </div>
+      </div>
+
+      <!-- Main Game Area -->
+      <div id="game-area" class="game-area">
+        <!-- Forest Background -->
+        <div id="forest-background" class="forest-background beginner-forest">
+          <div class="forest-layer forest-back"></div>
+          <div class="forest-layer forest-mid"></div>
+          <div class="forest-layer forest-front"></div>
+        </div>
+
+        <!-- Game Objects Container -->
+        <div id="game-objects" class="game-objects">
+          <!-- Pig will be inserted here -->
+          <div id="pig" class="pig pig--walking">
+            <div class="pig-sprite"></div>
+          </div>
+
+          <!-- Dirt mounds will be inserted here -->
+          <div id="dirt-mounds" class="dirt-mounds"></div>
+
+          <!-- Truffles will be inserted here -->
+          <div id="truffles" class="truffles"></div>
+
+          <!-- Collection basket -->
+          <div id="collection-basket" class="collection-basket">
+            <span class="basket-icon">🧺</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom UI Panel -->
+      <div id="bottom-ui" class="bottom-ui">
+        <div class="pig-stats">
+          <h3>Your Pig</h3>
+          <div class="stat-row">
+            <span>Sniffing Power:</span>
+            <span id="sniffing-level">Level 1 (10%)</span>
+            <button
+              id="upgrade-sniffing"
+              class="upgrade-btn"
+              data-upgrade="sniffing"
+            >
+              Upgrade ($50)
+            </button>
+          </div>
+          <div class="stat-row">
+            <span>Speed:</span>
+            <span id="speed-level">Level 1 (5.0s)</span>
+            <button id="upgrade-speed" class="upgrade-btn" data-upgrade="speed">
+              Upgrade ($75)
+            </button>
+          </div>
+          <div class="stat-row">
+            <span>Luck:</span>
+            <span id="luck-level">Level 1 (1.0x)</span>
+            <button id="upgrade-luck" class="upgrade-btn" data-upgrade="luck">
+              Upgrade ($100)
+            </button>
+          </div>
+        </div>
+
+        <div class="progress-stats">
+          <h3>Progress</h3>
+          <div class="stat-row">
+            <span>Truffles Found:</span>
+            <span id="truffles-found">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Legendaries Found:</span>
+            <span id="legendaries-found">0</span>
+          </div>
+          <div class="retirement-status">
+            <span id="retirement-text"
+              >Need 100 truffles + 1 legendary to retire</span
+            >
+            <button id="retire-pig" class="retire-btn" style="display: none">
+              Retire This Pig
+            </button>
+          </div>
+        </div>
+
+        <div class="location-controls">
+          <h3>Locations</h3>
+          <div class="location-buttons">
+            <button
+              id="location-beginner"
+              class="location-btn active"
+              data-location="beginner"
+            >
+              Beginner Forest
+            </button>
+            <button
+              id="location-oak"
+              class="location-btn locked"
+              data-location="oak"
+            >
+              Oak Grove (50⭐ + $500)
+            </button>
+            <button
+              id="location-ancient"
+              class="location-btn locked"
+              data-location="ancient"
+            >
+              Ancient Woods (500⭐ + $10K)
+            </button>
+            <button
+              id="location-mystic"
+              class="location-btn locked"
+              data-location="mystic"
+            >
+              Mystic Glade (2K⭐ + $75K)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications Container -->
+      <div id="notifications" class="notifications"></div>
+
+      <!-- Loading Screen -->
+      <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+          <h1>🐷 Truffle Hunter Tycoon 🍄</h1>
+          <p>Loading your pig adventure...</p>
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
