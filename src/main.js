@@ -5,21 +5,21 @@
 
 import { Game } from "./models/Game.js";
 import { GAME_CONFIG, GameUtils } from "./config/GameConfig.js";
+import { PigController } from "./controllers/PigController.js";
+import { TruffleController } from "./controllers/TruffleController.js";
 
 class TruffleHunterTycoon {
   constructor() {
     this.game = null;
+    this.pigController = null;
+    this.truffleController = null;
+
     this.isInitialized = false;
     this.lastFrameTime = 0;
     this.animationFrameId = null;
 
     // UI Elements
     this.elements = {};
-
-    // Game state
-    this.activeMounds = [];
-    this.moundSpawnTimer = 0;
-    this.lastMoundSpawn = 0;
 
     console.log("🎮 Truffle Hunter Tycoon initializing...");
   }
@@ -29,22 +29,38 @@ class TruffleHunterTycoon {
    */
   async init() {
     try {
+      // Cache DOM elements first
+      this.cacheElements();
+
       // Show loading screen
       this.showLoadingScreen();
-
-      // Cache DOM elements
-      this.cacheElements();
 
       // Initialize game model
       this.game = new Game();
 
+      // Initialize controllers
+      this.pigController = new PigController(this.game.activePig, this);
+      this.truffleController = new TruffleController(this.game);
+
       // Set up event listeners
       this.setupEventListeners();
+
+      // Initialize controllers with DOM
+      if (!this.pigController.initializePigVisual()) {
+        throw new Error("Failed to initialize pig visual");
+      }
+
+      if (!this.truffleController.initialize()) {
+        throw new Error("Failed to initialize truffle controller");
+      }
 
       // Attempt to load saved game
       const loaded = this.game.load();
       if (loaded) {
         console.log("📂 Loaded saved game");
+        // Update pig controller with loaded pig
+        this.pigController.pig = this.game.activePig;
+        this.pigController.setupPigEvents();
       } else {
         console.log("🆕 Starting new game");
       }
@@ -70,43 +86,70 @@ class TruffleHunterTycoon {
    * Cache DOM elements for performance
    */
   cacheElements() {
-    this.elements = {
+    const elementIds = {
       // Resource displays
-      goldAmount: document.getElementById("gold-amount"),
-      reputationAmount: document.getElementById("reputation-amount"),
+      goldAmount: "gold-amount",
+      reputationAmount: "reputation-amount",
 
       // Pig stats
-      sniffingLevel: document.getElementById("sniffing-level"),
-      speedLevel: document.getElementById("speed-level"),
-      luckLevel: document.getElementById("luck-level"),
+      sniffingLevel: "sniffing-level",
+      speedLevel: "speed-level",
+      luckLevel: "luck-level",
 
       // Progress stats
-      trufflesFound: document.getElementById("truffles-found"),
-      legendariesFound: document.getElementById("legendaries-found"),
-      retirementText: document.getElementById("retirement-text"),
-      retirePigBtn: document.getElementById("retire-pig"),
+      trufflesFound: "truffles-found",
+      legendariesFound: "legendaries-found",
+      retirementText: "retirement-text",
+      retirePigBtn: "retire-pig",
 
       // Upgrade buttons
-      upgradeSniffing: document.getElementById("upgrade-sniffing"),
-      upgradeSpeed: document.getElementById("upgrade-speed"),
-      upgradeLuck: document.getElementById("upgrade-luck"),
+      upgradeSniffing: "upgrade-sniffing",
+      upgradeSpeed: "upgrade-speed",
+      upgradeLuck: "upgrade-luck",
 
       // Location elements
-      currentLocation: document.getElementById("current-location"),
-      locationButtons: document.querySelectorAll(".location-btn"),
+      currentLocation: "current-location",
 
       // Game area
-      gameArea: document.getElementById("game-area"),
-      gameObjects: document.getElementById("game-objects"),
-      pig: document.getElementById("pig"),
-      dirtMounds: document.getElementById("dirt-mounds"),
-      truffles: document.getElementById("truffles"),
-      forestBackground: document.getElementById("forest-background"),
+      gameArea: "game-area",
+      gameObjects: "game-objects",
+      pig: "pig",
+      dirtMounds: "dirt-mounds",
+      truffles: "truffles",
+      forestBackground: "forest-background",
 
       // UI containers
-      notifications: document.getElementById("notifications"),
-      loadingScreen: document.getElementById("loading-screen"),
+      notifications: "notifications",
+      loadingScreen: "loading-screen",
     };
+
+    this.elements = {};
+    const missingElements = [];
+
+    // Cache each element
+    for (const [key, id] of Object.entries(elementIds)) {
+      const element = document.getElementById(id);
+      if (element) {
+        this.elements[key] = element;
+      } else {
+        missingElements.push(id);
+        console.warn(`⚠️ Element not found: ${id}`);
+      }
+    }
+
+    // Cache location buttons separately since they're a NodeList
+    this.elements.locationButtons = document.querySelectorAll(".location-btn");
+
+    if (missingElements.length > 0) {
+      console.warn(
+        `⚠️ Missing ${missingElements.length} DOM elements:`,
+        missingElements
+      );
+    } else {
+      console.log("✅ All DOM elements cached successfully");
+    }
+
+    return missingElements.length === 0;
   }
 
   /**
@@ -125,42 +168,40 @@ class TruffleHunterTycoon {
     this.game.on("pigRetired", (data) => this.onPigRetired(data));
     this.game.on("victoryAchieved", (data) => this.onVictoryAchieved(data));
 
-    // Pig events
-    if (this.game.activePig) {
-      this.game.activePig.on("truffleFound", (data) =>
-        this.onTruffleFoundByPig(data)
+    // Controller events
+    this.setupControllerEvents();
+
+    // UI event listeners with null checks
+    if (this.elements.upgradeSniffing) {
+      this.elements.upgradeSniffing.addEventListener("click", () =>
+        this.upgradeClicked("sniffing")
       );
-      this.game.activePig.on("pigStartedDigging", (data) =>
-        this.onPigStartedDigging(data)
+    }
+    if (this.elements.upgradeSpeed) {
+      this.elements.upgradeSpeed.addEventListener("click", () =>
+        this.upgradeClicked("speed")
+      );
+    }
+    if (this.elements.upgradeLuck) {
+      this.elements.upgradeLuck.addEventListener("click", () =>
+        this.upgradeClicked("luck")
       );
     }
 
-    // UI event listeners
-    this.elements.upgradeSniffing.addEventListener("click", () =>
-      this.upgradeClicked("sniffing")
-    );
-    this.elements.upgradeSpeed.addEventListener("click", () =>
-      this.upgradeClicked("speed")
-    );
-    this.elements.upgradeLuck.addEventListener("click", () =>
-      this.upgradeClicked("luck")
-    );
-
-    this.elements.retirePigBtn.addEventListener("click", () =>
-      this.retirePigClicked()
-    );
+    if (this.elements.retirePigBtn) {
+      this.elements.retirePigBtn.addEventListener("click", () =>
+        this.retirePigClicked()
+      );
+    }
 
     // Location button events
-    this.elements.locationButtons.forEach((btn) => {
-      btn.addEventListener("click", () =>
-        this.locationClicked(btn.dataset.location)
-      );
-    });
-
-    // Game area click for dirt mounds
-    this.elements.gameArea.addEventListener("click", (e) =>
-      this.gameAreaClicked(e)
-    );
+    if (this.elements.locationButtons) {
+      this.elements.locationButtons.forEach((btn) => {
+        btn.addEventListener("click", () =>
+          this.locationClicked(btn.dataset.location)
+        );
+      });
+    }
 
     // Auto-save every 30 seconds
     setInterval(() => {
@@ -178,6 +219,46 @@ class TruffleHunterTycoon {
   }
 
   /**
+   * Set up controller event listeners
+   */
+  setupControllerEvents() {
+    // Pig controller events
+    if (this.pigController) {
+      this.pigController.on("pigStateChanged", (data) =>
+        this.onPigStateChanged(data)
+      );
+      this.pigController.on("truffleFoundByPig", (data) =>
+        this.onTruffleFoundByPig(data)
+      );
+      this.pigController.on("pigStartedDigging", (data) =>
+        this.onPigStartedDigging(data)
+      );
+      this.pigController.on("diggingFailed", (data) =>
+        this.onDiggingFailed(data)
+      );
+      this.pigController.on("pigWrappedScreen", (data) =>
+        this.onPigWrappedScreen(data)
+      );
+    }
+
+    // Truffle controller events
+    if (this.truffleController) {
+      this.truffleController.on("moundSpawned", (data) =>
+        this.onMoundSpawned(data)
+      );
+      this.truffleController.on("moundClicked", (data) =>
+        this.onMoundClicked(data)
+      );
+      this.truffleController.on("moundRemoved", (data) =>
+        this.onMoundRemoved(data)
+      );
+      this.truffleController.on("showNotification", (data) =>
+        this.showNotification(data.message, data.type)
+      );
+    }
+  }
+
+  /**
    * Start the game loop
    */
   start() {
@@ -185,8 +266,7 @@ class TruffleHunterTycoon {
     this.lastFrameTime = performance.now();
     this.gameLoop();
 
-    // Start mound spawning
-    this.scheduleMoundSpawn();
+    console.log("🎮 Game loop started");
   }
 
   /**
@@ -199,11 +279,21 @@ class TruffleHunterTycoon {
     // Update game state
     this.game.update(deltaTime);
 
-    // Update mound spawning
-    this.updateMoundSpawning(deltaTime);
+    // Update controllers
+    if (this.pigController) {
+      this.pigController.update(deltaTime);
+    }
 
-    // Update visual elements
-    this.updateAnimations(deltaTime);
+    if (this.truffleController) {
+      this.truffleController.update(deltaTime);
+    }
+
+    // Update UI periodically (not every frame for performance)
+    if (
+      Math.floor(currentTime / 100) !== Math.floor(this.lastFrameTime / 100)
+    ) {
+      this.updateUI();
+    }
 
     // Continue the loop
     this.animationFrameId = requestAnimationFrame((time) =>
@@ -211,172 +301,42 @@ class TruffleHunterTycoon {
     );
   }
 
-  /**
-   * Update mound spawning system
-   */
-  updateMoundSpawning(deltaTime) {
-    this.moundSpawnTimer += deltaTime;
-
-    const spawnInterval = this.game.activePig
-      ? this.game.activePig.getMoundInterval() / 1000 // Convert to seconds
-      : GAME_CONFIG.MECHANICS.moundSpawn.baseInterval;
-
-    if (this.moundSpawnTimer >= spawnInterval) {
-      this.spawnMound();
-      this.moundSpawnTimer = 0;
-    }
-
-    // Update existing mounds
-    this.updateMounds(deltaTime);
-  }
-
-  /**
-   * Spawn a new dirt mound
-   */
-  spawnMound() {
-    // Limit number of active mounds
-    if (
-      this.activeMounds.length >=
-      GAME_CONFIG.MECHANICS.moundSpawn.maxActiveMounds
-    ) {
-      return;
-    }
-
-    const spawnZone = GAME_CONFIG.MECHANICS.moundSpawn.spawnZone;
-    const x =
-      spawnZone.left + Math.random() * (spawnZone.right - spawnZone.left);
-    const y = 50; // Ground level
-
-    // Determine truffle type for this mound
-    const truffleType = GameUtils.getRandomTruffleType(
-      this.game.currentLocation
-    );
-
-    const mound = {
-      id: Date.now() + Math.random(),
-      x,
-      y,
-      truffleType,
-      spawnTime: Date.now(),
-      lifetime: GAME_CONFIG.MECHANICS.moundSpawn.moundLifetime * 1000, // Convert to ms
-      element: null,
-    };
-
-    // Create DOM element
-    const moundElement = document.createElement("div");
-    moundElement.className = "dirt-mound clickable";
-    moundElement.style.left = `${x}px`;
-    moundElement.style.bottom = `${y}px`;
-    moundElement.innerHTML = "🌰"; // Dirt mound icon
-    moundElement.dataset.moundId = mound.id;
-
-    mound.element = moundElement;
-    this.elements.dirtMounds.appendChild(moundElement);
-    this.activeMounds.push(mound);
-
-    console.log(
-      `🌰 Spawned mound at (${Math.round(x)}, ${y}) with ${truffleType}`
-    );
-  }
-
-  /**
-   * Update existing mounds (remove expired ones)
-   */
-  updateMounds(deltaTime) {
-    const now = Date.now();
-
-    for (let i = this.activeMounds.length - 1; i >= 0; i--) {
-      const mound = this.activeMounds[i];
-      const age = now - mound.spawnTime;
-
-      if (age >= mound.lifetime) {
-        // Remove expired mound
-        if (mound.element && mound.element.parentNode) {
-          mound.element.parentNode.removeChild(mound.element);
-        }
-        this.activeMounds.splice(i, 1);
-      }
-    }
-  }
-
-  /**
-   * Handle game area clicks (dirt mounds)
-   */
-  gameAreaClicked(event) {
-    const target = event.target;
-    if (target.classList.contains("dirt-mound")) {
-      const moundId = target.dataset.moundId;
-      const mound = this.activeMounds.find((m) => m.id == moundId);
-
-      if (mound) {
-        this.moundClicked(mound);
-      }
-    }
-  }
-
-  /**
-   * Handle mound click
-   */
-  moundClicked(mound) {
-    if (!this.game.activePig || this.game.activePig.state !== "walking") {
-      return; // Pig is busy
-    }
-
-    // Start pig digging
-    const success = this.game.activePig.startDigging(mound);
-    if (success) {
-      // Remove mound from active list and DOM
-      const index = this.activeMounds.indexOf(mound);
-      if (index > -1) {
-        this.activeMounds.splice(index, 1);
-      }
-
-      if (mound.element && mound.element.parentNode) {
-        mound.element.parentNode.removeChild(mound.element);
-      }
-    }
-  }
-
-  /**
-   * Schedule next mound spawn
-   */
-  scheduleMoundSpawn() {
-    // This is handled in the game loop now
-  }
-
-  /**
-   * Update visual animations
-   */
-  updateAnimations(deltaTime) {
-    // Update pig position
-    if (this.game.activePig) {
-      const pigState = this.game.activePig.getState();
-      this.elements.pig.style.left = `${pigState.position.x}px`;
-
-      // Update pig animation class
-      this.elements.pig.className = `pig pig--${pigState.animation}`;
-    }
-  }
+  // Remove old mound management methods since they're now in TruffleController
+  // updateMoundSpawning, spawnMound, updateMounds, moundClicked, scheduleMoundSpawn, updateAnimations
+  // are all handled by the controllers now
 
   /**
    * Update UI with current game state
    */
   updateUI() {
+    if (!this.game) return;
+
     const gameState = this.game.getGameState();
 
     // Update resource displays
-    this.elements.goldAmount.textContent = GameUtils.formatCurrency(
-      gameState.gold
-    );
-    this.elements.reputationAmount.textContent =
-      gameState.reputation.toString();
+    if (this.elements.goldAmount) {
+      this.elements.goldAmount.textContent = GameUtils.formatCurrency(
+        gameState.gold
+      );
+    }
+    if (this.elements.reputationAmount) {
+      this.elements.reputationAmount.textContent =
+        gameState.reputation.toString();
+    }
 
     // Update pig stats
     if (gameState.activePig) {
       const pig = gameState.activePig;
-      this.elements.sniffingLevel.textContent = `Level ${pig.sniffingLevel} (${pig.upgradeValues.sniffing})`;
-      this.elements.speedLevel.textContent = `Level ${pig.speedLevel} (${pig.upgradeValues.speed})`;
-      this.elements.luckLevel.textContent = `Level ${pig.luckLevel} (${pig.upgradeValues.luck})`;
+
+      if (this.elements.sniffingLevel) {
+        this.elements.sniffingLevel.textContent = `Level ${pig.sniffingLevel} (${pig.upgradeValues.sniffing})`;
+      }
+      if (this.elements.speedLevel) {
+        this.elements.speedLevel.textContent = `Level ${pig.speedLevel} (${pig.upgradeValues.speed})`;
+      }
+      if (this.elements.luckLevel) {
+        this.elements.luckLevel.textContent = `Level ${pig.luckLevel} (${pig.upgradeValues.luck})`;
+      }
 
       // Update upgrade buttons
       this.updateUpgradeButton("sniffing", pig);
@@ -384,29 +344,38 @@ class TruffleHunterTycoon {
       this.updateUpgradeButton("luck", pig);
 
       // Update progress
-      this.elements.trufflesFound.textContent = pig.trufflesFound.toString();
-      this.elements.legendariesFound.textContent =
-        pig.legendariesFound.toString();
+      if (this.elements.trufflesFound) {
+        this.elements.trufflesFound.textContent = pig.trufflesFound.toString();
+      }
+      if (this.elements.legendariesFound) {
+        this.elements.legendariesFound.textContent =
+          pig.legendariesFound.toString();
+      }
 
       // Update retirement status
-      if (pig.canRetire) {
-        this.elements.retirementText.textContent = "Ready to retire!";
-        this.elements.retirePigBtn.style.display = "block";
-      } else {
-        const needed =
-          GAME_CONFIG.RETIREMENT.requirements.totalTruffles - pig.trufflesFound;
-        const legendaryNeeded =
-          GAME_CONFIG.RETIREMENT.requirements.legendaryTruffles -
-          pig.legendariesFound;
-        this.elements.retirementText.textContent = `Need ${needed} more truffles${
-          legendaryNeeded > 0 ? ` + ${legendaryNeeded} legendary` : ""
-        }`;
-        this.elements.retirePigBtn.style.display = "none";
+      if (this.elements.retirementText && this.elements.retirePigBtn) {
+        if (pig.canRetire) {
+          this.elements.retirementText.textContent = "Ready to retire!";
+          this.elements.retirePigBtn.style.display = "block";
+        } else {
+          const needed =
+            GAME_CONFIG.RETIREMENT.requirements.totalTruffles -
+            pig.trufflesFound;
+          const legendaryNeeded =
+            GAME_CONFIG.RETIREMENT.requirements.legendaryTruffles -
+            pig.legendariesFound;
+          this.elements.retirementText.textContent = `Need ${needed} more truffles${
+            legendaryNeeded > 0 ? ` + ${legendaryNeeded} legendary` : ""
+          }`;
+          this.elements.retirePigBtn.style.display = "none";
+        }
       }
     }
 
     // Update location display
-    this.elements.currentLocation.textContent = gameState.currentLocation;
+    if (this.elements.currentLocation) {
+      this.elements.currentLocation.textContent = gameState.currentLocation;
+    }
 
     // Update location buttons
     this.updateLocationButtons(gameState);
@@ -416,10 +385,13 @@ class TruffleHunterTycoon {
    * Update upgrade button state
    */
   updateUpgradeButton(upgradeType, pigState) {
-    const button =
-      this.elements[
-        `upgrade${upgradeType.charAt(0).toUpperCase() + upgradeType.slice(1)}`
-      ];
+    const buttonKey = `upgrade${
+      upgradeType.charAt(0).toUpperCase() + upgradeType.slice(1)
+    }`;
+    const button = this.elements[buttonKey];
+
+    if (!button) return;
+
     const cost = pigState.upgradeCosts[upgradeType];
 
     if (cost === null) {
@@ -466,7 +438,72 @@ class TruffleHunterTycoon {
     });
   }
 
-  // ===== EVENT HANDLERS =====
+  // ===== CONTROLLER EVENT HANDLERS =====
+
+  /**
+   * Handle pig state changes
+   */
+  onPigStateChanged(data) {
+    console.log(`🐷 Pig state: ${data.from} → ${data.to}`);
+    this.updateUI();
+  }
+
+  /**
+   * Handle pig started digging
+   */
+  onPigStartedDigging(data) {
+    console.log("🐷 Pig started digging!");
+    this.showNotification("Pig is digging...", "info");
+  }
+
+  /**
+   * Handle digging failed
+   */
+  onDiggingFailed(data) {
+    console.log("💔 Digging failed");
+    this.showNotification("No truffle found!", "warning");
+  }
+
+  /**
+   * Handle pig wrapped around screen
+   */
+  onPigWrappedScreen(data) {
+    // Optional: could show a cute animation or sound effect
+    console.log(`🌍 Pig wrapped screen (${data.direction})`);
+  }
+
+  /**
+   * Handle mound spawned
+   */
+  onMoundSpawned(data) {
+    // Optional: could show spawn effects or sounds
+    if (data.mound.rarity === "legendary") {
+      this.showNotification("✨ Legendary mound appeared!", "achievement");
+    }
+  }
+
+  /**
+   * Handle mound clicked
+   */
+  onMoundClicked(data) {
+    console.log(`🎯 Mound clicked: ${data.truffleType}`);
+
+    // Tell pig controller to start digging
+    if (this.pigController) {
+      this.pigController.startDigging(data.mound);
+    }
+  }
+
+  /**
+   * Handle mound removed
+   */
+  onMoundRemoved(data) {
+    if (data.expired) {
+      console.log("⏰ Mound expired");
+    }
+  }
+
+  // ===== EXISTING EVENT HANDLERS (updated) =====
 
   /**
    * Handle upgrade button clicks
@@ -578,9 +615,19 @@ class TruffleHunterTycoon {
    * Handle truffle found by pig
    */
   onTruffleFoundByPig(data) {
-    // This is called when pig successfully digs up a truffle
-    // The game model will handle the actual truffle found event
-    console.log(`🍄 Pig found ${data.type}!`);
+    console.log(`🍄 Pig found ${data.type}! Value: ${data.value}`);
+
+    // Create collection animation
+    if (this.truffleController) {
+      this.truffleController.createTruffleCollectionEffect(
+        data.type,
+        data.pig.position.x,
+        data.pig.position.y + 20
+      );
+    }
+
+    // Let the game model handle the actual truffle processing
+    // This will trigger onTruffleFound which updates resources
   }
 
   /**
@@ -619,17 +666,25 @@ class TruffleHunterTycoon {
    * Show loading screen
    */
   showLoadingScreen() {
-    this.elements.loadingScreen.style.display = "flex";
+    const loadingScreen =
+      this.elements.loadingScreen || document.getElementById("loading-screen");
+    if (loadingScreen) {
+      loadingScreen.style.display = "flex";
+    }
   }
 
   /**
    * Hide loading screen with animation
    */
   async hideLoadingScreen() {
+    const loadingScreen =
+      this.elements.loadingScreen || document.getElementById("loading-screen");
+    if (!loadingScreen) return Promise.resolve();
+
     return new Promise((resolve) => {
-      this.elements.loadingScreen.classList.add("fade-out");
+      loadingScreen.classList.add("fade-out");
       setTimeout(() => {
-        this.elements.loadingScreen.style.display = "none";
+        loadingScreen.style.display = "none";
         resolve();
       }, 500);
     });

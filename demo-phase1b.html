@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Truffle Hunter Tycoon - Phase 1B Interactive Demo</title>
+
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/components/pig.css" />
+    <link rel="stylesheet" href="css/components/forest.css" />
+    <link rel="stylesheet" href="css/components/truffle.css" />
+    <link rel="stylesheet" href="css/components/ui-panel.css" />
+    <link rel="stylesheet" href="css/layouts/game-layout.css" />
+    <link rel="stylesheet" href="css/animations/ui-animations.css" />
+
+    <!-- GSAP Animation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+      /* Demo-specific styles */
+      .demo-controls {
+        position: fixed;
+        top: 70px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        border-radius: 8px;
+        border: 2px solid #8b4513;
+        z-index: 200;
+        max-width: 250px;
+      }
+
+      .demo-controls h4 {
+        margin: 0 0 10px 0;
+        color: #8b4513;
+        font-size: 14px;
+      }
+
+      .demo-button {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+        padding: 8px 12px;
+        background: #8b4513;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .demo-button:hover {
+        background: #a0522d;
+      }
+
+      .demo-button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .demo-info {
+        font-size: 11px;
+        color: #666;
+        margin: 8px 0;
+        line-height: 1.3;
+      }
+
+      .demo-status {
+        background: #f0f0f0;
+        padding: 8px;
+        border-radius: 4px;
+        margin: 8px 0;
+        font-family: monospace;
+        font-size: 10px;
+      }
+
+      .success-indicator {
+        color: #32cd32;
+        font-weight: bold;
+      }
+
+      .error-indicator {
+        color: #dc143c;
+        font-weight: bold;
+      }
+
+      .demo-toggle {
+        margin: 5px 0;
+      }
+
+      .demo-toggle input {
+        margin-right: 5px;
+      }
+
+      .demo-toggle label {
+        font-size: 11px;
+        color: #333;
+      }
+
+      /* Visual debugging */
+      .debug-mode .pig {
+        border: 2px dashed red;
+      }
+
+      .debug-mode .dirt-mound {
+        border: 1px solid blue;
+      }
+
+      .debug-mode .dirt-mound::after {
+        content: attr(data-truffle-type);
+        position: absolute;
+        top: -20px;
+        left: 0;
+        font-size: 8px;
+        background: blue;
+        color: white;
+        padding: 2px 4px;
+        border-radius: 2px;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Demo Controls Panel -->
+    <div class="demo-controls">
+      <h4>🎮 Phase 1B Demo Controls</h4>
+
+      <div class="demo-info">
+        Test pig movement, mound spawning, and click interactions.
+      </div>
+
+      <button class="demo-button" onclick="testPigMovement()">
+        🐷 Test Pig Walking
+      </button>
+
+      <button class="demo-button" onclick="forceSpawnMound()">
+        🌰 Force Spawn Mound
+      </button>
+
+      <button class="demo-button" onclick="spawnLegendaryMound()">
+        ✨ Spawn Legendary Mound
+      </button>
+
+      <button class="demo-button" onclick="clearAllMounds()">
+        🧹 Clear All Mounds
+      </button>
+
+      <button class="demo-button" onclick="testDiggingSequence()">
+        🎯 Test Full Digging Sequence
+      </button>
+
+      <div class="demo-toggle">
+        <input type="checkbox" id="debugMode" onchange="toggleDebugMode()" />
+        <label for="debugMode">Debug Mode</label>
+      </div>
+
+      <div class="demo-toggle">
+        <input
+          type="checkbox"
+          id="autoSpawn"
+          onchange="toggleAutoSpawn()"
+          checked
+        />
+        <label for="autoSpawn">Auto Spawn Mounds</label>
+      </div>
+
+      <div class="demo-status" id="demoStatus">Status: Initializing...</div>
+
+      <button class="demo-button" onclick="showGameStats()">
+        📊 Show Game Stats
+      </button>
+
+      <button class="demo-button" onclick="runPhase1BTests()">
+        ✅ Run All Phase 1B Tests
+      </button>
+    </div>
+
+    <!-- Main Game Container (same as production) -->
+    <div id="game-container" class="game-container">
+      <!-- Top UI Bar -->
+      <div id="top-ui" class="top-ui">
+        <div class="resource-display">
+          <div class="gold-display">
+            <span class="gold-icon">🪙</span>
+            <span id="gold-amount" class="gold-amount">$0</span>
+          </div>
+          <div class="reputation-display">
+            <span class="reputation-icon">⭐</span>
+            <span id="reputation-amount" class="reputation-amount">0</span>
+          </div>
+        </div>
+
+        <div class="location-display">
+          <span id="current-location" class="current-location"
+            >Beginner Forest</span
+          >
+        </div>
+      </div>
+
+      <!-- Main Game Area -->
+      <div id="game-area" class="game-area">
+        <!-- Forest Background -->
+        <div id="forest-background" class="forest-background beginner-forest">
+          <div class="forest-layer forest-back"></div>
+          <div class="forest-layer forest-mid"></div>
+          <div class="forest-layer forest-front"></div>
+        </div>
+
+        <!-- Game Objects Container -->
+        <div id="game-objects" class="game-objects">
+          <!-- Pig will be controlled by PigController -->
+          <div id="pig" class="pig pig--walking">
+            <div class="pig-sprite"></div>
+          </div>
+
+          <!-- Dirt mounds managed by TruffleController -->
+          <div id="dirt-mounds" class="dirt-mounds"></div>
+
+          <!-- Truffles managed by TruffleController -->
+          <div id="truffles" class="truffles"></div>
+
+          <!-- Collection basket -->
+          <div id="collection-basket" class="collection-basket">
+            <span class="basket-icon">🧺</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom UI Panel -->
+      <div id="bottom-ui" class="bottom-ui">
+        <div class="pig-stats">
+          <h3>Your Pig</h3>
+          <div class="stat-row">
+            <span>Sniffing Power:</span>
+            <span id="sniffing-level">Level 1 (10%)</span>
+            <button
+              id="upgrade-sniffing"
+              class="upgrade-btn"
+              data-upgrade="sniffing"
+            >
+              Upgrade ($50)
+            </button>
+          </div>
+          <div class="stat-row">
+            <span>Speed:</span>
+            <span id="speed-level">Level 1 (5.0s)</span>
+            <button id="upgrade-speed" class="upgrade-btn" data-upgrade="speed">
+              Upgrade ($75)
+            </button>
+          </div>
+          <div class="stat-row">
+            <span>Luck:</span>
+            <span id="luck-level">Level 1 (1.0x)</span>
+            <button id="upgrade-luck" class="upgrade-btn" data-upgrade="luck">
+              Upgrade ($100)
+            </button>
+          </div>
+        </div>
+
+        <div class="progress-stats">
+          <h3>Progress</h3>
+          <div class="stat-row">
+            <span>Truffles Found:</span>
+            <span id="truffles-found">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Legendaries Found:</span>
+            <span id="legendaries-found">0</span>
+          </div>
+          <div class="retirement-status">
+            <span id="retirement-text"
+              >Need 100 truffles + 1 legendary to retire</span
+            >
+            <button id="retire-pig" class="retire-btn" style="display: none">
+              Retire This Pig
+            </button>
+          </div>
+        </div>
+
+        <div class="location-controls">
+          <h3>Demo Info</h3>
+          <div class="demo-info">
+            <strong>Phase 1B Features:</strong><br />
+            • Pig walks automatically<br />
+            • Mounds spawn every few seconds<br />
+            • Click mounds to dig<br />
+            • Pig moves to mound location<br />
+            • Success/failure animations<br />
+            • Truffle collection effects
+          </div>
+          <div class="demo-info">
+            <strong>Active Mounds:</strong>
+            <span id="active-mounds-count">0</span><br />
+            <strong>Pig State:</strong> <span id="pig-state">walking</span
+            ><br />
+            <strong>Pig Position:</strong> <span id="pig-position">100, 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications Container -->
+      <div id="notifications" class="notifications"></div>
+
+      <!-- Loading Screen -->
+      <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+          <h1>🐷 Truffle Hunter Tycoon 🍄</h1>
+          <p>Loading Phase 1B Demo...</p>
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script type="module" src="src/main.js"></script>
+
+    <!-- Demo Testing Scripts -->
+    <script>
+      // Demo control variables
+      let gameInstance = null;
+      let demoTestResults = [];
+      let autoSpawnEnabled = true;
+      let debugModeEnabled = false;
+
+      // Wait for game to initialize
+      window.addEventListener("load", () => {
+        // Give the game a moment to initialize
+        setTimeout(() => {
+          gameInstance = window.truffleGame;
+          if (gameInstance) {
+            console.log("🎮 Demo connected to game instance");
+            updateDemoStatus("Connected to game");
+            startDemoUpdates();
+          } else {
+            console.error("❌ Failed to connect to game instance");
+            updateDemoStatus("ERROR: Game not found");
+          }
+        }, 1000);
+      });
+
+      // Demo control functions
+      function updateDemoStatus(message) {
+        const statusElement = document.getElementById("demoStatus");
+        if (statusElement) {
+          const timestamp = new Date().toLocaleTimeString();
+          statusElement.innerHTML = `[${timestamp}] ${message}`;
+        }
+      }
+
+      function startDemoUpdates() {
+        // Update demo info every second
+        setInterval(() => {
+          if (
+            gameInstance &&
+            gameInstance.truffleController &&
+            gameInstance.pigController
+          ) {
+            const activeMounds =
+              gameInstance.truffleController.getActiveMoundsCount();
+            const pigState = gameInstance.pigController.pig
+              ? gameInstance.pigController.pig.state
+              : "none";
+            const pigPos = gameInstance.pigController.getPosition();
+
+            document.getElementById("active-mounds-count").textContent =
+              activeMounds;
+            document.getElementById("pig-state").textContent = pigState;
+            document.getElementById("pig-position").textContent = `${Math.round(
+              pigPos.x
+            )}, ${Math.round(pigPos.y)}`;
+          }
+        }, 1000);
+      }
+
+      function testPigMovement() {
+        if (!gameInstance || !gameInstance.pigController) {
+          updateDemoStatus("ERROR: No pig controller");
+          return;
+        }
+
+        updateDemoStatus("Testing pig movement...");
+
+        // Test different pig states
+        const pig = gameInstance.pigController.pig;
+        if (pig) {
+          // Force different animations
+          gameInstance.pigController.setAnimation("walk");
+          setTimeout(
+            () => gameInstance.pigController.setAnimation("dig"),
+            1000
+          );
+          setTimeout(
+            () => gameInstance.pigController.setAnimation("celebrate"),
+            2000
+          );
+          setTimeout(
+            () => gameInstance.pigController.setAnimation("walk"),
+            3000
+          );
+
+          updateDemoStatus("Pig animation test completed");
+        }
+      }
+
+      function forceSpawnMound() {
+        if (!gameInstance || !gameInstance.truffleController) {
+          updateDemoStatus("ERROR: No truffle controller");
+          return;
+        }
+
+        const success = gameInstance.truffleController.forceSpawnMound();
+        if (success) {
+          updateDemoStatus("Mound spawned successfully");
+        } else {
+          updateDemoStatus("ERROR: Could not spawn mound");
+        }
+      }
+
+      function spawnLegendaryMound() {
+        if (!gameInstance || !gameInstance.truffleController) {
+          updateDemoStatus("ERROR: No truffle controller");
+          return;
+        }
+
+        // Try to spawn different legendary types
+        const legendaryTypes = [
+          "Diamond Truffles",
+          "Golden Truffles",
+          "Poo Truffles",
+        ];
+        const randomLegendary =
+          legendaryTypes[Math.floor(Math.random() * legendaryTypes.length)];
+
+        const success =
+          gameInstance.truffleController.forceSpawnMound(randomLegendary);
+        if (success) {
+          updateDemoStatus(`Spawned ${randomLegendary} mound!`);
+        } else {
+          updateDemoStatus("ERROR: Could not spawn legendary mound");
+        }
+      }
+
+      function clearAllMounds() {
+        if (!gameInstance || !gameInstance.truffleController) {
+          updateDemoStatus("ERROR: No truffle controller");
+          return;
+        }
+
+        gameInstance.truffleController.clearAllMounds();
+        updateDemoStatus("All mounds cleared");
+      }
+
+      function testDiggingSequence() {
+        if (
+          !gameInstance ||
+          !gameInstance.truffleController ||
+          !gameInstance.pigController
+        ) {
+          updateDemoStatus("ERROR: Missing controllers");
+          return;
+        }
+
+        updateDemoStatus("Testing full digging sequence...");
+
+        // Spawn a mound first
+        const success =
+          gameInstance.truffleController.forceSpawnMound("Summer Truffles");
+        if (success) {
+          // Wait a moment then simulate click
+          setTimeout(() => {
+            const activeMounds =
+              gameInstance.truffleController.getActiveMounds();
+            if (activeMounds.length > 0) {
+              const mound = gameInstance.truffleController.activeMounds[0];
+
+              // Simulate mound click
+              gameInstance.truffleController.handleMoundClick(mound, {
+                stopPropagation: () => {},
+              });
+              updateDemoStatus("Initiated digging sequence");
+            }
+          }, 500);
+        }
+      }
+
+      function toggleDebugMode() {
+        debugModeEnabled = document.getElementById("debugMode").checked;
+        const gameContainer = document.getElementById("game-container");
+
+        if (debugModeEnabled) {
+          gameContainer.classList.add("debug-mode");
+          updateDemoStatus("Debug mode enabled");
+        } else {
+          gameContainer.classList.remove("debug-mode");
+          updateDemoStatus("Debug mode disabled");
+        }
+      }
+
+      function toggleAutoSpawn() {
+        autoSpawnEnabled = document.getElementById("autoSpawn").checked;
+        updateDemoStatus(
+          `Auto spawn ${autoSpawnEnabled ? "enabled" : "disabled"}`
+        );
+
+        // This could be used to pause/resume the TruffleController spawning
+        if (gameInstance && gameInstance.truffleController) {
+          // For now, just log the state
+          console.log(`Auto spawn: ${autoSpawnEnabled}`);
+        }
+      }
+
+      function showGameStats() {
+        if (!gameInstance) {
+          updateDemoStatus("ERROR: No game instance");
+          return;
+        }
+
+        const stats = {
+          game: gameInstance.game
+            ? gameInstance.game.getGameState()
+            : "not found",
+          pig: gameInstance.pigController
+            ? gameInstance.pigController.getDebugInfo()
+            : "not found",
+          truffle: gameInstance.truffleController
+            ? gameInstance.truffleController.getDebugInfo()
+            : "not found",
+        };
+
+        console.log("🎮 Game Stats:", stats);
+        updateDemoStatus("Game stats logged to console");
+
+        // Also show brief stats in demo panel
+        alert(`Game Stats:
+Gold: $${stats.game.gold || 0}
+Reputation: ${stats.game.reputation || 0}
+Pig State: ${stats.pig.state || "unknown"}
+Active Mounds: ${stats.truffle.activeMounds || 0}
+Pig Position: ${
+          stats.pig.position
+            ? `${Math.round(stats.pig.position.x)}, ${Math.round(
+                stats.pig.position.y
+              )}`
+            : "unknown"
+        }`);
+      }
+
+      function runPhase1BTests() {
+        updateDemoStatus("Running Phase 1B tests...");
+        demoTestResults = [];
+
+        // Test 1: Check if controllers exist
+        testControllerExistence();
+
+        // Test 2: Check pig movement
+        setTimeout(() => testPigMovement(), 500);
+
+        // Test 3: Check mound spawning
+        setTimeout(() => testMoundSpawning(), 1000);
+
+        // Test 4: Check click interaction
+        setTimeout(() => testClickInteraction(), 1500);
+
+        // Test 5: Show results
+        setTimeout(() => showTestResults(), 3000);
+      }
+
+      function testControllerExistence() {
+        const test = {
+          name: "Controller Existence",
+          passed: false,
+          details: "",
+        };
+
+        if (
+          gameInstance &&
+          gameInstance.pigController &&
+          gameInstance.truffleController
+        ) {
+          test.passed = true;
+          test.details = "All controllers found";
+        } else {
+          test.details = `Missing: ${!gameInstance ? "game" : ""} ${
+            !gameInstance?.pigController ? "pig" : ""
+          } ${!gameInstance?.truffleController ? "truffle" : ""}`;
+        }
+
+        demoTestResults.push(test);
+        console.log(
+          `✅ Test: ${test.name} - ${test.passed ? "PASSED" : "FAILED"}: ${
+            test.details
+          }`
+        );
+      }
+
+      function testMoundSpawning() {
+        const test = {
+          name: "Mound Spawning",
+          passed: false,
+          details: "",
+        };
+
+        if (gameInstance && gameInstance.truffleController) {
+          const beforeCount =
+            gameInstance.truffleController.getActiveMoundsCount();
+          const success = gameInstance.truffleController.forceSpawnMound();
+          const afterCount =
+            gameInstance.truffleController.getActiveMoundsCount();
+
+          if (success && afterCount > beforeCount) {
+            test.passed = true;
+            test.details = `Mounds: ${beforeCount} → ${afterCount}`;
+          } else {
+            test.details = `Spawn failed or count unchanged: ${beforeCount} → ${afterCount}`;
+          }
+        } else {
+          test.details = "No truffle controller";
+        }
+
+        demoTestResults.push(test);
+        console.log(
+          `✅ Test: ${test.name} - ${test.passed ? "PASSED" : "FAILED"}: ${
+            test.details
+          }`
+        );
+      }
+
+      function testClickInteraction() {
+        const test = {
+          name: "Click Interaction",
+          passed: false,
+          details: "",
+        };
+
+        if (
+          gameInstance &&
+          gameInstance.truffleController &&
+          gameInstance.pigController
+        ) {
+          // Check if pig can be set to digging state
+          const pig = gameInstance.pigController.pig;
+          if (pig && pig.state === "walking") {
+            test.passed = true;
+            test.details = "Pig ready for interaction";
+          } else {
+            test.details = `Pig state: ${pig ? pig.state : "none"}`;
+          }
+        } else {
+          test.details = "Controllers not ready";
+        }
+
+        demoTestResults.push(test);
+        console.log(
+          `✅ Test: ${test.name} - ${test.passed ? "PASSED" : "FAILED"}: ${
+            test.details
+          }`
+        );
+      }
+
+      function showTestResults() {
+        const passedTests = demoTestResults.filter((t) => t.passed).length;
+        const totalTests = demoTestResults.length;
+
+        updateDemoStatus(`Tests: ${passedTests}/${totalTests} passed`);
+
+        console.log("🎯 Phase 1B Test Results:");
+        demoTestResults.forEach((test) => {
+          console.log(
+            `  ${test.passed ? "✅" : "❌"} ${test.name}: ${test.details}`
+          );
+        });
+
+        if (passedTests === totalTests) {
+          updateDemoStatus("🎉 All Phase 1B tests passed!");
+        } else {
+          updateDemoStatus(`⚠️ ${totalTests - passedTests} tests failed`);
+        }
+      }
+    </script>
+  </body>
+</html>
