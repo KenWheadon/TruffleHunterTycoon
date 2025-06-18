@@ -171,6 +171,13 @@ class TruffleHunterTycoon {
     // Controller events
     this.setupControllerEvents();
 
+    // Game area click delegation for dirt mounds (since mounds are created dynamically)
+    if (this.elements.gameArea) {
+      this.elements.gameArea.addEventListener("click", (e) =>
+        this.handleGameAreaClick(e)
+      );
+    }
+
     // UI event listeners with null checks
     if (this.elements.upgradeSniffing) {
       this.elements.upgradeSniffing.addEventListener("click", () =>
@@ -438,7 +445,27 @@ class TruffleHunterTycoon {
     });
   }
 
-  // ===== CONTROLLER EVENT HANDLERS =====
+  /**
+   * Handle clicks in the game area (event delegation for mounds)
+   */
+  handleGameAreaClick(event) {
+    const target = event.target;
+
+    // Check if clicked element is a dirt mound
+    if (target.classList.contains("dirt-mound")) {
+      const moundId = target.dataset.moundId;
+      if (moundId && this.truffleController) {
+        // Find the mound by ID
+        const mound = this.truffleController.activeMounds.find(
+          (m) => m.id == moundId
+        );
+        if (mound) {
+          // Trigger the mound click handler
+          this.truffleController.handleMoundClick(mound, event);
+        }
+      }
+    }
+  }
 
   /**
    * Handle pig state changes
@@ -498,8 +525,8 @@ class TruffleHunterTycoon {
    * Handle mound removed
    */
   onMoundRemoved(data) {
-    if (data.expired) {
-      console.log("⏰ Mound expired");
+    if (data.offScreen) {
+      console.log("📤 Mound went off screen");
     }
   }
 

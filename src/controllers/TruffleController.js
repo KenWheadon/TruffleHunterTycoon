@@ -25,12 +25,18 @@ export class TruffleController extends EventEmitter {
     // DOM elements
     this.moundContainer = null;
     this.truffleContainer = null;
+    this.gameArea = null;
+
+    // Scrolling world mechanics
+    this.worldSpeed = 100; // Pixels per second that world moves left
+    this.screenWidth = 800; // Approximate screen width
+    this.spawnX = this.screenWidth + 50; // Spawn off right side
+    this.despawnX = -100; // Remove when off left side
 
     // Spawning parameters
-    this.spawnZone = GAME_CONFIG.MECHANICS.moundSpawn.spawnZone;
     this.moundLifetime = GAME_CONFIG.MECHANICS.moundSpawn.moundLifetime * 1000; // Convert to ms
 
-    console.log("🍄 TruffleController initialized");
+    console.log("🍄 TruffleController initialized for scrolling world");
   }
 
   /**
@@ -39,13 +45,22 @@ export class TruffleController extends EventEmitter {
   initialize() {
     this.moundContainer = document.getElementById("dirt-mounds");
     this.truffleContainer = document.getElementById("truffles");
+    this.gameArea = document.getElementById("game-area");
 
     if (!this.moundContainer || !this.truffleContainer) {
       console.error("❌ Required DOM containers not found");
       return false;
     }
 
-    console.log("✅ TruffleController DOM initialized");
+    // Get actual screen width
+    if (this.gameArea) {
+      this.screenWidth = this.gameArea.clientWidth;
+      this.spawnX = this.screenWidth + 50;
+    }
+
+    console.log(
+      `✅ TruffleController DOM initialized (screen width: ${this.screenWidth}px)`
+    );
     return true;
   }
 
@@ -58,11 +73,11 @@ export class TruffleController extends EventEmitter {
     // Update spawn timing
     this.updateSpawning(deltaTime);
 
-    // Update existing mounds
+    // Update existing mounds (move them left)
     this.updateMounds(deltaTime);
 
-    // Clean up expired mounds
-    this.cleanupExpiredMounds();
+    // Clean up off-screen mounds
+    this.cleanupOffscreenMounds();
   }
 
   /**
@@ -104,10 +119,8 @@ export class TruffleController extends EventEmitter {
   spawnMound() {
     if (!this.moundContainer) return;
 
-    // Generate random position within spawn zone
-    const x =
-      this.spawnZone.left +
-      Math.random() * (this.spawnZone.right - this.spawnZone.left);
+    // Spawn at right edge of screen
+    const x = this.spawnX;
     const y = 50; // Ground level
 
     // Determine what truffle type this mound will contain
@@ -122,7 +135,6 @@ export class TruffleController extends EventEmitter {
       y,
       truffleType,
       spawnTime: Date.now(),
-      lifetime: this.moundLifetime,
       element: null,
       clicked: false,
       rarity: truffleConfig.rarity,
@@ -173,19 +185,8 @@ export class TruffleController extends EventEmitter {
       element.classList.add("dirt-mound--rare");
     }
 
-    // Add click handler
-    element.addEventListener("click", (event) => {
-      this.handleMoundClick(mound, event);
-    });
-
-    // Add hover effects
-    element.addEventListener("mouseenter", () => {
-      this.showMoundPreview(mound);
-    });
-
-    element.addEventListener("mouseleave", () => {
-      this.hideMoundPreview(mound);
-    });
+    // Note: Click handling is done via event delegation in main.js
+    // No individual click handlers needed here
 
     return element;
   }
@@ -279,39 +280,29 @@ export class TruffleController extends EventEmitter {
   }
 
   /**
-   * Update existing mounds
+   * Update existing mounds (move them left across screen)
    */
   updateMounds(deltaTime) {
-    const currentTime = Date.now();
-
     this.activeMounds.forEach((mound) => {
-      const age = currentTime - mound.spawnTime;
-      const remainingLife = (mound.lifetime - age) / mound.lifetime;
+      // Move mound left across screen
+      mound.x -= this.worldSpeed * deltaTime;
 
-      // Update visual state based on remaining life
-      if (
-        remainingLife < 0.3 &&
-        !mound.element.classList.contains("mound-expiring")
-      ) {
-        mound.element.classList.add("mound-expiring");
-        mound.element.style.animation =
-          "mound-expire-warning 0.5s ease-in-out infinite alternate";
+      // Update DOM position
+      if (mound.element) {
+        mound.element.style.left = `${mound.x}px`;
       }
     });
   }
 
   /**
-   * Clean up expired mounds
+   * Clean up mounds that have moved off screen
    */
-  cleanupExpiredMounds() {
-    const currentTime = Date.now();
-
+  cleanupOffscreenMounds() {
     for (let i = this.activeMounds.length - 1; i >= 0; i--) {
       const mound = this.activeMounds[i];
-      const age = currentTime - mound.spawnTime;
 
-      if (age >= mound.lifetime) {
-        this.removeMound(mound, true); // true = expired naturally
+      if (mound.x < this.despawnX) {
+        this.removeMound(mound, true); // true = went off screen
       }
     }
   }
@@ -319,7 +310,7 @@ export class TruffleController extends EventEmitter {
   /**
    * Remove a mound from the game
    */
-  removeMound(mound, expired = false) {
+  removeMound(mound, offScreen = false) {
     // Remove from array
     const index = this.activeMounds.indexOf(mound);
     if (index > -1) {
@@ -333,27 +324,29 @@ export class TruffleController extends EventEmitter {
 
     // Remove from DOM with animation
     if (mound.element && mound.element.parentNode) {
-      if (expired) {
+      if (offScreen) {
+        // Just remove immediately for off-screen mounds
+        mound.element.parentNode.removeChild(mound.element);
+      } else {
+        // Animate removal for clicked mounds
         mound.element.classList.add("dirt-mound--despawning");
         setTimeout(() => {
           if (mound.element.parentNode) {
             mound.element.parentNode.removeChild(mound.element);
           }
         }, 300);
-      } else {
-        mound.element.parentNode.removeChild(mound.element);
       }
     }
 
     // Emit removal event
     this.emit("moundRemoved", {
       mound,
-      expired,
+      offScreen,
       remainingMounds: this.activeMounds.length,
     });
 
-    if (expired) {
-      console.log(`⏰ Mound expired: ${mound.truffleType}`);
+    if (offScreen) {
+      console.log(`📤 Mound went off screen: ${mound.truffleType}`);
     }
   }
 

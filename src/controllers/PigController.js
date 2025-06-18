@@ -61,7 +61,8 @@ export class PigController extends EventEmitter {
       return false;
     }
 
-    // Set initial position
+    // Set pig to center of screen and keep it there
+    this.currentPosition = { x: 400, y: 0 }; // Center horizontally
     this.updatePigPosition();
 
     // Set pig color
@@ -70,7 +71,7 @@ export class PigController extends EventEmitter {
     // Start walking animation
     this.setAnimation("walk");
 
-    console.log("🐷 Pig visual initialized");
+    console.log("🐷 Pig visual initialized at center position");
     return true;
   }
 
@@ -100,23 +101,11 @@ export class PigController extends EventEmitter {
    * Update pig movement logic
    */
   updateMovement(deltaTime) {
-    if (this.pig.state === "walking" && !this.isMovingToTarget) {
-      // Normal walking behavior
-      const speedModifier = this.getSpeedModifier();
-      const movement = this.walkSpeed * speedModifier * deltaTime;
+    // Pig stays in center - no horizontal movement
+    // Only handle digging movement (move to mound when digging)
 
-      this.currentPosition.x += movement;
-
-      // Wrap around screen edges
-      if (this.currentPosition.x > 850) {
-        this.currentPosition.x = -50;
-        this.emit("pigWrappedScreen", { direction: "right" });
-      } else if (this.currentPosition.x < -50) {
-        this.currentPosition.x = 850;
-        this.emit("pigWrappedScreen", { direction: "left" });
-      }
-    } else if (this.isMovingToTarget && this.targetPosition) {
-      // Moving to specific target (like a mound)
+    if (this.isMovingToTarget && this.targetPosition) {
+      // When digging, pig moves to the mound position
       const dx = this.targetPosition.x - this.currentPosition.x;
       const distance = Math.abs(dx);
 
@@ -132,6 +121,19 @@ export class PigController extends EventEmitter {
         const moveSpeed = this.walkSpeed * 2; // Move faster when targeting
         const movement = moveSpeed * direction * deltaTime;
         this.currentPosition.x += movement;
+      }
+    } else {
+      // Return pig to center position when not digging
+      const centerX = 400; // Center of screen
+      const dx = centerX - this.currentPosition.x;
+
+      if (Math.abs(dx) > 5) {
+        const direction = dx > 0 ? 1 : -1;
+        const returnSpeed = this.walkSpeed * 3; // Fast return to center
+        const movement = returnSpeed * direction * deltaTime;
+        this.currentPosition.x += movement;
+      } else {
+        this.currentPosition.x = centerX;
       }
     }
   }
